@@ -20,7 +20,7 @@ class UsersController {
       }
 
       // Hash the password using SHA1
-      const hashedPassword = crypto.createHash('sha1').update(password).digest('hex');
+      const hashedPassword = sha1.createHash('sha1').update(password).digest('hex');
 
       // Create and save the new user
       const result = await dbClient.collection('users').insertOne({
