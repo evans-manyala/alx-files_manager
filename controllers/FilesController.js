@@ -1,6 +1,7 @@
 import { v4 as uuidv4 } from 'uuid';
 import fs from 'fs';
 import path from 'path';
+import mime from 'mime-types';
 import dbClient from '../utils/db';
 import redisClient from '../utils/redis';
 
@@ -118,6 +119,40 @@ class FilesController {
     }
 
     return res.status(200).json({ message: 'File unpublished' });
+  }
+
+  static async getFile(req, res) {
+    const { id } = req.params;
+    const token = req.header('X-Token');
+    const usrID = await FilesController.usrIDFromToken(token);
+
+    const file = await dbClient.db.collection('files').findOne({ _id: id });
+
+    if (!file) {
+      return res.status(404).json({ error: 'Not found' });
+    }
+
+    if (!file.isPublic && (!usrID || file.usrID !== usrID)) {
+      return res.status(404).json({ error: 'Not found' });
+    }
+
+    if (file.type === 'folder') {
+      return res.status(400).json({ error: 'A folder doesn\'t have content' });
+    }
+
+    if (!file.localPath || !fs.existsSync(file.localPath)) {
+      return res.status(404).json({ error: 'Not found' });
+    }
+
+    const mimeType = mime.lookup(file.localPath) || 'application/octet-stream';
+
+    try {
+      const fileData = await fs.promises.readFile(file.localPath);
+      res.setHeader('Content-Type', mimeType);
+      return res.status(200).send(fileData);
+    } catch (error) {
+      return res.status(500).json({ error: 'An error occurred while retrieving the file data.' });
+    }
   }
 
   static async usrIDFromToken(token) {
