@@ -78,6 +78,48 @@ class FilesController {
     return res.status(200).json(files);
   }
 
+  static async putPublish(req, res) {
+    const { id } = req.params;
+    const token = req.header('X-Token');
+    const usrID = await FilesController.usrIDFromToken(token);
+
+    if (!usrID) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    const result = await dbClient.db.collection('files').updateOne(
+      { _id: id, usrID },
+      { $set: { isPublic: true } }
+    );
+
+    if (result.matchedCount === 0) {
+      return res.status(404).json({ error: 'Not found' });
+    }
+
+    return res.status(200).json({ message: 'File published' });
+  }
+
+  static async putUnpublish(req, res) {
+    const { id } = req.params;
+    const token = req.header('X-Token');
+    const usrID = await FilesController.usrIDFromToken(token);
+
+    if (!usrID) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    const result = await dbClient.db.collection('files').updateOne(
+      { _id: id, usrID },
+      { $set: { isPublic: false } }
+    );
+
+    if (result.matchedCount === 0) {
+      return res.status(404).json({ error: 'Not found' });
+    }
+
+    return res.status(200).json({ message: 'File unpublished' });
+  }
+
   static async usrIDFromToken(token) {
     return redisClient.get(`auth_${token}`);
   }
