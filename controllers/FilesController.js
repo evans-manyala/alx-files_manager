@@ -89,7 +89,7 @@ class FilesController {
 
     const result = await dbClient.db.collection('files').updateOne(
       { _id: id, usrID },
-      { $set: { isPublic: true } }
+      { $set: { isPublic: true } },
     );
 
     if (result.matchedCount === 0) {
@@ -110,7 +110,7 @@ class FilesController {
 
     const result = await dbClient.db.collection('files').updateOne(
       { _id: id, usrID },
-      { $set: { isPublic: false } }
+      { $set: { isPublic: false } },
     );
 
     if (result.matchedCount === 0) {
