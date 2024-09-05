@@ -1,5 +1,5 @@
 import crypto from 'crypto';
-import { ObjectID } from 'mongodb';
+import { ObjectId } from 'mongodb';
 import dbClient from '../utils/db';
 import redisClient from '../utils/redis';
 
@@ -21,12 +21,17 @@ const UsersController = {
 
     const hashedPassword = crypto.createHash('sha1').update(password).digest('hex');
     const newUser = { email, password: hashedPassword };
-    const result = await dbClient.db.collection('users').insertOne(newUser);
 
-    return res.status(201).json({
-      id: result.insertedId,
-      email: newUser.email,
-    });
+    try {
+      const result = await dbClient.db.collection('users').insertOne(newUser);
+
+      return res.status(201).json({
+        id: result.insertedId,
+        email: newUser.email,
+      });
+    } catch (error) {
+      return res.status(500).json({ error: 'Internal Server Error' });
+    }
   },
 
   async getMe(req, res) {
@@ -38,7 +43,7 @@ const UsersController = {
       return res.status(401).json({ error: 'Unauthorized' });
     }
 
-    const user = await dbClient.db.collection('users').findOne({ _id: new ObjectID(userId) });
+    const user = await dbClient.db.collection('users').findOne({ _id: new ObjectId(userId) });
 
     if (!user) {
       return res.status(401).json({ error: 'Unauthorized' });
@@ -48,4 +53,4 @@ const UsersController = {
   },
 };
 
-module.exports = UsersController;
+export default UsersController;
